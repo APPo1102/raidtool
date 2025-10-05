@@ -43,6 +43,13 @@
             }
         //結束loadData
         }
+        function formatState (state) {
+            if (!state.id) { return state.text; }
+            var $state = $(
+                '<span><img src="assets/images/' +  state.element.value.toLowerCase() +
+                '.png" class="img-flag" /> ' + state.text +'</span>');
+            return $state;
+        };
         //宣告一個function 函數 名稱為initializeTeams init通常為呼叫初始化的名稱
         function initializeTeams() {
             //宣告一個變數teamAContainer 設定為抓取頁面中id是teamA的物件（document.getElementById）
@@ -51,6 +58,8 @@
             const teamBContainer = document.getElementById('teamB');
 
             const teamATabs = document.getElementsByClassName("stats-labels-A");
+
+            const teamBTabs = document.getElementsByClassName("stats-labels-B");
             
             //設定teamAContainer的屬性innerHTML為空 innerHTML為資料內全部的HTML資料
             teamAContainer.innerHTML = '';
@@ -65,9 +74,17 @@
                 teamBContainer.appendChild(createMemberRow('B', i));
             //結束for迴圈
             }
+            $(".job-select").select2({
+                templateResult: formatState
+            });
+            $(".job-select").on('select2:select',function(e){
+                updateMemberStats($(this).data("team"), $(this).data("index"), e.target.value);
+                updateAllSummaries();
+            });
             for (let i = 0; i < teamATabs.length; i++){
                 for (let j = 0; j < 4; j++) {
                     teamATabs[i].appendChild(createstatsValuesRow('A', i, j));
+                    teamBTabs[i].appendChild(createstatsValuesRow('B', i, j));
                 }                
             }
         //結束initializeTrams
@@ -99,6 +116,7 @@
             //querySelector不僅限抓取class 更改內容可依據id,欄位名稱如span/div等等的去抓取內容
             //適用於更新資料 如抓官網更新內容等
             const select = memberSelect.querySelector('.job-select');
+            //const select = $(`#job-select-${team}-${index}`);
             //設定select一個觸發條件(change) 如果達成條件就執行內部程式 觸發條件包含change,click等等的動作
             select.addEventListener('change', (e) => {
                 //執行updateMemberStats的函數
@@ -107,6 +125,8 @@
                 updateAllSummaries();
             //結束設定
             });
+            
+            
             //判斷challengeData內的資料長度大於0（challengeData為陣列 此處指陣列內容物數量）
             if (challengeData.length > 0) {
                 //迴圈 遍歷challengeData的內容 並設定每一個單獨的陣列內容物為共用的變數job
@@ -118,7 +138,7 @@
                     //設定option的文字內容為job陣列的職業（此處為下拉式選單給前端使用者看見的選項文字）
                     option.textContent = job['職業'];
                     //將option新增到select內
-                    select.appendChild(option);
+                    select.append(option);
                     //結束遍歷
                 });
             //結束判斷
@@ -212,7 +232,21 @@
             //遍歷statKeys
             statKeys.forEach(key => {
                 //設定teamStats的key欄位為0
-                teamStats[key] = 100;
+                switch(key){
+                    case "物理Buff":
+                    case "物理DeBuff":
+                    case "物理破防":
+                    case "物理總增益":
+                    case "魔法Buff":
+                    case "魔法DeBuff":
+                    case "魔法破防":
+                    case "魔法總增益":
+                        teamStats[key] = 100;
+                        break;
+                    default:
+                        teamStats[key] = 0;
+                        break;
+                }
             //結束遍歷
             });
             //遍歷selects並設定內容為select
@@ -227,38 +261,35 @@
                     if (jobData) {
                         //遍歷statKeys
                         statKeys.forEach(key => {
-                            //宣告一個變數value 設定為jobData陣列中編號為key的資料
-                            console.log(key);
+                            //宣告一個變數value 設定為jobData陣列中編號為key的資料                            
                             const value = jobData[key];
-                            //如果value存在且value內容不為空
-                            if (value && value !== '') {
-                                //如果value的型態為string(字串）且value的內容含有%這個字元
-                                if (typeof value === 'string' && value.includes('%')) {
-                                    //宣告一個變數numValue 設定為將%替換成''後的字串轉換的浮點數（小數） ex: 文字的"2.5%"轉換成數字的2.5
-                                    const numValue = parseFloat(value.replace('%', ''));
-                                    //如果numValue不是NaN  即轉換有成功（ex:2.7$會轉換失敗 回傳NaN)
-                                      if (!isNaN(numValue)) {
-                                        //設定teamStats的key內容 加上numValue(ex:1+=1 則回傳2）
-                                        teamStats[key] *= (100+numValue)/100;
-                                     //結束if
+                            switch(key){
+                                case "物理Buff":
+                                    switch(document.getElementById(`damage-type-${team}`).value){
+                                        case "A":teamStats[key] *= (100+parseFloat(value.replace('%', '')))/100;break;
+                                        case "B":break;
+                                        case "C":break;
+                                        case "D":break;
+                                        case "E":break;
+                                        case "F":break;
+                                        case "G":break;
                                     }
-                                //結束if
-                                } 
-                                //當上方if條件不成立 再來判斷這邊的if
-                                //如果經過浮點數轉換的value不是NaN
-                                else if (!isNaN(parseFloat(value))) {
-                                    //teamStats的key內容 加上浮點數轉換的value
-                                    teamStats[key] *= (100+parseFloat(value))/100;
-                                //結束if
-                                }
-                                //如果經過整數轉換的value不是NaN(Int為整數 Float為浮點數）
-                                else if (!isNaN(parseInt(value))) {
-                                    //teamStats的key內容 加上整數轉換的value
-                                    teamStats[key] *= (100+parseInt(value))/100;
-                                //結束if
-                                }
-                            //結束if
-                            }
+                                    break;
+                                case "物理DeBuff":teamStats[key] *= defaultcalculate(value);break;
+                                case "物理破防":teamStats[key] *= defaultcalculate(value);break;
+                                case "物理總增益":teamStats[key] *= defaultcalculate(value);break;
+                                case "魔法Buff":teamStats[key] *= defaultcalculate(value);break;
+                                case "魔法DeBuff":teamStats[key] *= defaultcalculate(value);break;
+                                case "魔法破防":teamStats[key] *= defaultcalculate(value);break;
+                                case "魔法總增益":teamStats[key] *= defaultcalculate(value);break;
+                                case "降抗":teamStats[key] *= defaultcalculate(value);break;
+                                case "每秒回魔":teamStats[key] *= defaultcalculate(value);break;
+                                case "扛吼/擋傷":teamStats[key] *= defaultcalculate(value);break;
+                                case "消火/解DeBuff":teamStats[key] *= defaultcalculate(value);break;
+                                case "霸體":teamStats[key] *= defaultcalculate(value);break;
+                                default:
+                                    break;
+                            }                            
                         //結束遍歷
                         });
                     //結束if
@@ -270,6 +301,21 @@
             //返回teamStats
             return teamStats;
         //結束function
+        }
+        function defaultcalculate(value){
+            if (value && value !== '') {
+                if (typeof value === 'string' && value.includes('%')) {
+                    const numValue = parseFloat(value.replace('%', ''));
+                    if (!isNaN(numValue)) {
+                        return (100+numValue)/100;
+                    }
+                }else if (!isNaN(parseFloat(value))) {
+                    return (100+parseFloat(value))/100;
+                }else if (!isNaN(parseInt(value))) {
+                    return (100+parseInt(value))/100;
+                }
+            }
+            return 1;
         }
         //宣告一個function 名稱為updateAllSummaries
         function updateAllSummaries() {
@@ -369,11 +415,39 @@
             //結束if
             }
         //結束條件設定
-        });
-        
+        });        
         //頁面載入時(DOMContentLoaded)執行function"loadData"
         document.addEventListener('DOMContentLoaded', loadData);
-        $( function() {
+        $( function() {            
             $( "#tabs-A" ).tabs();
+            $( "#tabs-B" ).tabs();
             $( ".team-settings" ).accordion({collapsible: true,active: false,});
+            $( "#title-19-4-A" ).on("change",function(){
+                if(this.checked) {
+                   $( "#armor-pen-shoes-A" ).prop('disabled', true);
+                   $( "#death-title-A" ).prop('disabled', true);
+                   $( "#armor-pen-shoes-percent-A" ).prop('disabled', true);
+                   $( "#dark-shadow-A" ).prop('disabled', true);
+                }else{
+                    $( "#armor-pen-shoes-A" ).prop('disabled', false);
+                   $( "#death-title-A" ).prop('disabled', false);
+                   $( "#armor-pen-shoes-percent-A" ).prop('disabled', false);
+                   $( "#dark-shadow-A" ).prop('disabled', false);
+                }
+            });
+            $( "#title-19-4-B" ).on("change",function(){
+                if(this.checked) {
+                   $( "#armor-pen-shoes-B" ).prop('disabled', true);
+                   $( "#death-title-B" ).prop('disabled', true);
+                   $( "#armor-pen-shoes-percent-B" ).prop('disabled', true);
+                   $( "#dark-shadow-B" ).prop('disabled', true);
+                }else{
+                    $( "#armor-pen-shoes-B" ).prop('disabled', false);
+                   $( "#death-title-B" ).prop('disabled', false);
+                   $( "#armor-pen-shoes-percent-B" ).prop('disabled', false);
+                   $( "#dark-shadow-B" ).prop('disabled', false);
+                }
+            });
+            
+            
         } );
