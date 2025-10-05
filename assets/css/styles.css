@@ -72,14 +72,19 @@ body {
     flex-shrink: 0;
 }
 
-.stats-labels {
+.stats-labels,
+.stats-labels-A {
     display: flex;
     gap: 0;
     padding-left: 20px;
 }
 
-.stats-labels span {
+
+.stats-labels span,
+.stats-labels-A span:not(.stat-value) {
+    display: table-cell;
     width: 85px;
+    min-width: 85px;
     font-size: 11px;
     color: #b9bbbe;
     font-weight: 600;
@@ -92,17 +97,20 @@ body {
     text-overflow: ellipsis;
 }
 
-.stats-labels span:first-child {
+.stats-labels span:first-child,
+.stats-labels-A span:first-child {
     border-radius: 6px 0 0 6px;
 }
 
-.stats-labels span:last-child {
+.stats-labels span:last-child,
+.stats-labels-A span:last-child {
     border-radius: 0 6px 6px 0;
     border-right: none;
 }
 
 /* 成員行樣式 */
 .team-members {
+    margin-top:100px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -112,6 +120,10 @@ body {
     display: flex;
     align-items: stretch;
     min-height: 80px;
+}
+
+.stats-labels-A .member-row:not(:first-child){
+    margin-top: 20px;
 }
 
 .member-select {
@@ -153,7 +165,7 @@ body {
 .stats-values {
     display: flex;
     gap: 0;
-    padding-left: 20px;
+    /*padding-left: 20px;*/
     align-items: center;
 }
 
@@ -265,6 +277,10 @@ body {
     cursor: pointer;
 }
 
+.setting-item option{
+    color: black;
+}
+
 .setting-item select:focus {
     outline: none;
     border-color: #5865f2;
@@ -280,6 +296,7 @@ body {
 
 /* 隊伍總計區域 */
 .team-summary {
+    margin-top:20px;
     background: rgba(49, 51, 56, 0.5);
     border-radius: 12px;
     padding: 20px;
@@ -404,9 +421,15 @@ body {
 /* 響應式設計 */
 @media (max-width: 1200px) {
     .stats-labels span,
+    .stats-labels-A span,
     .stat-value {
         width: 75px;
-        font-size: 10px;
+        font-size: 12px;
+    }
+    .stats-labels span,
+    .stats-labels-A span:not(.stat-value) {
+        min-width: 75px;
+        width: 75px;
     }
 }
 
@@ -544,4 +567,16 @@ select:focus {
     to {
         transform: rotate(360deg);
     }
+}
+
+.hidden{
+    display: none !important;
+}
+
+
+#tabs-A-1 .magical,
+#tabs-A-1 .detail,
+#tabs-A-2 .physics,
+#tabs-A-2 .detail{
+    display:none !important;
 }
