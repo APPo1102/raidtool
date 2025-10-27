@@ -81,6 +81,10 @@
                 updateMemberStats($(this).data("team"), $(this).data("index"), e.target.value);
                 updateAllSummaries();
             });
+            $("input").on('change',function(e){
+                updateAllSummaries();
+            });
+           
             for (let i = 0; i < teamATabs.length; i++){
                 for (let j = 0; j < 4; j++) {
                     teamATabs[i].appendChild(createstatsValuesRow('A', i, j));
@@ -229,19 +233,87 @@
             const teamStats = {};
             //宣告一個變數selects 內容為頁面中class為job-select[data-team="${team}"]的Element
             const selects = document.querySelectorAll(`.job-select[data-team="${team}"]`);
-            //遍歷statKeys
+            //遍歷statKeys            
             statKeys.forEach(key => {
                 //設定teamStats的key欄位為0
                 switch(key){
                     case "物理Buff":
-                    case "物理DeBuff":
-                    case "物理破防":
-                    case "物理總增益":
                     case "魔法Buff":
-                    case "魔法DeBuff":
-                    case "魔法破防":
-                    case "魔法總增益":
                         teamStats[key] = 100;
+                        if((document.getElementById("sacred-beast-combat").value / 500000 * 0.5) > 4){
+                            teamStats[key] *= 1.04;
+                        }else{
+                            teamStats[key] *= (100+(Math.ceil(document.getElementById("sacred-beast-combat").value / 500000) * 0.5))/100;
+                        }
+                        const cri = parseInt(document.getElementById("critical-hit-damage").value);
+                        switch(document.getElementById(`damage-type-${team}`).value){
+                            case "A":                               
+                                //技傷                                           
+                                teamStats[key] *= (100+parseFloat(document.getElementById(`essascor-${team}`).value.replace('%', '')))/100;    
+                                //物理/魔法
+                                teamStats[key] *= (100+10)/100;                      
+                                //爆傷
+                                teamStats[key] *= (cri+15)/cri;
+                                break;
+                            case "B":
+                                //技傷                                           
+                                teamStats[key] *= (100+parseFloat(document.getElementById(`essascor-${team}`).value.replace('%', '')))/100;    
+                                //物理/魔法
+                                teamStats[key] *= (100+10)/100; 
+                                break;                            
+                            case "C":
+                                 //爆傷
+                                teamStats[key] *= (cri+15)/cri;
+                                break;
+                            case "D":                                 
+                                //物理/魔法
+                                teamStats[key] *= (100+10)/100;                      
+                                //爆傷+技傷
+                                teamStats[key] *= (cri+15)/cri*1.1;
+                                break;
+                            case "E":
+                                //爆傷
+                                teamStats[key] *= 1.1;
+                                break;
+                            case "F":
+                                //爆傷+技傷
+                                teamStats[key] *= (cri+15)/cri;
+                                break;
+                            case "G":
+                                break;
+                        }
+                        break;
+                    case "物理DeBuff":
+                    case "魔法DeBuff":
+                        teamStats[key] = 100;
+                        break;
+                    case "物理破防": 
+                    case "魔法破防":
+                        teamStats[key] = 1;
+                        if($(`#title-19-4-${team}`).prop('checked')){
+                            teamStats[key] *= 0.52;
+                        }
+                        if(!$(`#title-19-4-${team}`).prop('checked') && $(`#death-title-${team}`).prop('checked')){
+                            teamStats[key] *= 0.8;
+                        }
+                        if(!$(`#title-19-4-${team}`).prop('checked') && $(`#armor-pen-shoes-${team}`).prop('checked')){
+                            teamStats[key] *= (100 - 2.5 * ($(`#armor-pen-value-${team}`).val() + 1)) / 100;
+                        }
+                        if(!$(`#title-19-4-${team}`).prop('checked') && $(`#armor-pen-shoes-percent-${team}`).prop('checked')){
+                            teamStats[key] *= 0.75;
+                        }
+                        if($(`#dream-incense-${team}`).prop('checked')){
+                            teamStats[key] *= 0.85;
+                        }   
+                        if($(`#wind-ball-${team}`).prop('checked')){
+                            teamStats[key] *= 0.5;
+                        }
+                        break;
+                    case "物理總增益":                        
+                        teamStats[key] = teamStats["物理Buff"]*teamStats["物理DeBuff"]*(1/(1-(((1 - teamStats["物理破防"]))* 1/(1+(258.6435937 + 39.35255313*99)/(0.9601*(258.6435937+39.35255313*99)/(1-0.9601))))))/100;
+                        break;
+                    case "魔法總增益":
+                        teamStats[key] = teamStats["魔法Buff"]*teamStats["魔法DeBuff"]*(1/(1-(((1 - teamStats["魔法破防"]))* 1/(1+(258.6435937 + 39.35255313*99)/(0.9601*(258.6435937+39.35255313*99)/(1-0.9601))))))/100;
                         break;
                     default:
                         teamStats[key] = 0;
@@ -264,24 +336,18 @@
                             //宣告一個變數value 設定為jobData陣列中編號為key的資料                            
                             const value = jobData[key];
                             switch(key){
-                                case "物理Buff":
-                                    switch(document.getElementById(`damage-type-${team}`).value){
-                                        case "A":teamStats[key] *= (100+parseFloat(value.replace('%', '')))/100;break;
-                                        case "B":break;
-                                        case "C":break;
-                                        case "D":break;
-                                        case "E":break;
-                                        case "F":break;
-                                        case "G":break;
-                                    }
-                                    break;
-                                case "物理DeBuff":teamStats[key] *= defaultcalculate(value);break;
-                                case "物理破防":teamStats[key] *= defaultcalculate(value);break;
-                                case "物理總增益":teamStats[key] *= defaultcalculate(value);break;
-                                case "魔法Buff":teamStats[key] *= defaultcalculate(value);break;
-                                case "魔法DeBuff":teamStats[key] *= defaultcalculate(value);break;
-                                case "魔法破防":teamStats[key] *= defaultcalculate(value);break;
-                                case "魔法總增益":teamStats[key] *= defaultcalculate(value);break;
+                                case "物理Buff":teamStats[key] *= defaultcalculate(value);break; 
+                                case "魔法Buff":teamStats[key] *= defaultcalculate(value);break; 
+
+                                case "物理DeBuff":teamStats[key] *= defaultcalculate(value);break;  
+                                case "魔法DeBuff":teamStats[key] *= defaultcalculate(value);break;  
+
+                                case "物理破防":teamStats[key] *= defensecalculate(value);break;
+                                case "魔法破防":teamStats[key] *= defensecalculate(value);break; 
+
+                                case "物理總增益":teamStats[key] = teamStats["物理Buff"]*teamStats["物理DeBuff"]*(1/(1-(((1-teamStats["物理破防"]))*1/(1+(258.6435937+39.35255313*99)/(0.9601*(258.6435937+39.35255313*99)/(1-0.9601))))))/100;break;
+                                case "魔法總增益":teamStats[key] = teamStats["魔法Buff"]*teamStats["魔法DeBuff"]*(1/(1-(((1-teamStats["魔法破防"]))*1/(1+(258.6435937+39.35255313*99)/(0.9601*(258.6435937+39.35255313*99)/(1-0.9601))))))/100;break;
+
                                 case "降抗":teamStats[key] *= defaultcalculate(value);break;
                                 case "每秒回魔":teamStats[key] *= defaultcalculate(value);break;
                                 case "扛吼/擋傷":teamStats[key] *= defaultcalculate(value);break;
@@ -313,6 +379,21 @@
                     return (100+parseFloat(value))/100;
                 }else if (!isNaN(parseInt(value))) {
                     return (100+parseInt(value))/100;
+                }
+            }
+            return 1;
+        }
+        function defensecalculate(value){
+            if (value && value !== '') {
+                if (typeof value === 'string' && value.includes('%')) {
+                    const numValue = parseFloat(value.replace('%', '')).toFixed(3);
+                    if (!isNaN(numValue)) {
+                        return (100-numValue)/100;
+                    }
+                }else if (!isNaN(parseFloat(value))) {
+                    return (100-parseFloat(value).toFixed(3))/100;
+                }else if (!isNaN(parseInt(value))) {
+                    return (100-parseInt(value).toFixed(3))/100;
                 }
             }
             return 1;
@@ -360,6 +441,8 @@
                         //變數displayValue設定為value的小數點後1位加上'%'的字元
                         displayValue = value.toFixed(2) + '%';
                     //如果key的文字包含秒
+                    } else if (key.includes('破防')) {
+                        displayValue = ((1 - value.toFixed(4))*100).toFixed(2) + '%';
                     } else if (key.includes('秒')) {
                         //變數displayValue設定為value的小數點後2位加上'%'的字元
                         displayValue = value.toFixed(2);
